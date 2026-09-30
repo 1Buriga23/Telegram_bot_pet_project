@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func MainMenu() tgbotapi.InlineKeyboardMarkup {
@@ -40,5 +40,12 @@ func ItemsMenu(categoryID string) tgbotapi.InlineKeyboardMarkup {
 			"menu:main",
 		),
 	})
+	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
+}
+
+func ItemMenu(categoryID string) tgbotapi.InlineKeyboardMarkup {
+	buttons := [][]tgbotapi.InlineKeyboardButton{
+		{tgbotapi.NewInlineKeyboardButtonData("⬅ Назад","category:"+categoryID,)},
+	}
 	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
 }
