@@ -18,38 +18,17 @@ func MainMenu() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
 }
 
-func ElementsMenu(categoryID string) tgbotapi.InlineKeyboardMarkup {
+func ItemsMenu(categoryID string) tgbotapi.InlineKeyboardMarkup {
 	buttons := [][]tgbotapi.InlineKeyboardButton{}
-	for _, element := range Elements {
+	for _, item := range Items {
 
-		if element.CategoryID != categoryID {
+		if item.CategoryID != categoryID {
 			continue
 		}
 
 		button := tgbotapi.NewInlineKeyboardButtonData(
-			element.Name,
-			"element:"+element.ID,
-		)
-
-		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})
-	}
-
-	buttons = append(buttons, []tgbotapi.InlineKeyboardButton{
-		tgbotapi.NewInlineKeyboardButtonData(
-			"⬅ Назад",
-			"menu:main",
-		),
-	})
-	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
-}
-
-func PerformancesMenu() tgbotapi.InlineKeyboardMarkup {
-	buttons := [][]tgbotapi.InlineKeyboardButton{}
-	for _, performance := range Performances {
-
-		button := tgbotapi.NewInlineKeyboardButtonData(
-			performance.Name,
-			"performances:"+performance.ID,
+			item.Name,
+			"item:"+item.ID,
 		)
 
 		buttons = append(buttons, []tgbotapi.InlineKeyboardButton{button})

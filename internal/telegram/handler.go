@@ -69,10 +69,10 @@ func (b *Bot) HandleCallback(callback *tgbotapi.CallbackQuery) {
 		categoryID := strings.TrimPrefix(data, "category:")
 		b.HandleCategory(callback, categoryID)
 
-	case strings.HasPrefix(data, "element:"):
+	case strings.HasPrefix(data, "item:"):
 
-		elementID := strings.TrimPrefix(data, "element:")
-		b.HandleElement(callback, elementID)
+		elementID := strings.TrimPrefix(data, "item:")
+		b.HandleItem(callback, elementID)
 
 	case data == "menu:main":
 		chatID := callback.Message.Chat.ID
@@ -126,24 +126,17 @@ func (b *Bot) HandleCategory(callback *tgbotapi.CallbackQuery, categoryID string
 
 	if categoryID == "performances"{
 		text = fmt.Sprintf("%s\n\nВыберите номер:", category.Name)
-		b.EditMenu(
-		chatID,
-		messageID,
-		text,
-		PerformancesMenu(),
-	)
-	return
 	}
 
 	b.EditMenu(
 		chatID,
 		messageID,
 		text,
-		ElementsMenu(categoryID),
+		ItemsMenu(categoryID),
 	)
 }
 
-func (b *Bot) HandleElement(callback *tgbotapi.CallbackQuery, categoryID string) {
+func (b *Bot) HandleItem(callback *tgbotapi.CallbackQuery, categoryID string) {
 
 }
 

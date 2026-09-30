@@ -6,13 +6,16 @@ type Category struct {
 	Type string
 }
 
-type Element struct {
+type Item struct {
 	ID string
 	Name string
 	CategoryID string
+	// Description string
 }
 
-type Performance struct {
+type Video struct {
 	ID string
+	ItemID string
 	Name string
+	FileID string
 }

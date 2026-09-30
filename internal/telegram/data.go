@@ -13,23 +13,23 @@ var Categories = []Category{
 	{
 		Name: "👦👩👦 Акробатика",
 		ID:   "acrobatics",
-		Type: "elements",
+		Type: "items",
 	},
 
 	{
 		Name: "👦👩 Гимнастика",
 		ID:   "gymnastics",
-		Type: "elements",
+		Type: "items",
 	},
 
 	{
 		Name: "🏆 Выступления",
 		ID:   "performances",
-		Type: "performance",
+		Type: "items",
 	},
 }
 
-var Elements = []Element{
+var Items = []Item{
 	{
 		Name:       "🤸 Сальто",
 		ID:         "flips",
@@ -47,21 +47,22 @@ var Elements = []Element{
 		ID:         "balances",
 		CategoryID: "acrobatics",
 	},
-}
 
-var Performances = []Performance{
 	{
 		Name: "Пираты",
 		ID:   "pirates",
+		CategoryID: "performances",
 	},
 
 	{
 		Name: "Обезьяны",
 		ID:   "monkey",
+		CategoryID: "performances",
 	},
 
 	{
 		Name: "Круэлла",
 		ID:   "cruela",
+		CategoryID: "performances",
 	},
 }
