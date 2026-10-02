@@ -1,8 +1,12 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
+	"gracia-bot/internal/models"
+	"gracia-bot/internal/repository"
 	"log"
+	"strconv"
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -47,12 +51,17 @@ func (b *Bot) ShowMainMenu(
 	text string,
 ) {
 
+	categories, err := repository.GetCategories(
+		context.Background(),
+		b.DB,
+	)
+
 	message := tgbotapi.NewMessage(
 		chatID,
 		text,
 	)
 
-	message.ReplyMarkup = MainMenu()
+	message.ReplyMarkup = MainMenu(categories)
 
 	msg, err := b.API.Send(message)
 
@@ -90,11 +99,17 @@ func (b *Bot) HandleCallback(callback *tgbotapi.CallbackQuery) {
 	case data == "menu:main":
 		chatID := callback.Message.Chat.ID
 		messageID := callback.Message.MessageID
+
+		categories, _ := repository.GetCategories(
+			context.Background(),
+			b.DB,
+		)
+
 		b.EditMenu(
 			chatID,
 			messageID,
 			"🤸 Gracia Bot 🤸\n\n\nВыбери каталог:",
-			MainMenu(),
+			MainMenu(categories),
 		)
 
 	}
@@ -137,15 +152,43 @@ func (b *Bot) HandleCategory(callback *tgbotapi.CallbackQuery, categoryID string
 
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
-	category := GetCategoryByID(categoryID)
 
-	if category == nil {
+	id, err := strconv.ParseInt(
+		categoryID,
+		10,
+		64,
+	)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	items, err := repository.GetItemsByCategoryID(
+		context.Background(),
+		b.DB,
+		id,
+	)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	category, err := repository.GetCategoryByID(
+		context.Background(),
+		b.DB,
+		id,
+	)
+
+	if err != nil {
+		log.Println(err)
 		return
 	}
 
 	text := fmt.Sprintf("%s\n\nВыберите элемент:", category.Name)
 
-	if categoryID == "performances" {
+	if category.Name == "Выступления" {
 		text = fmt.Sprintf("%s\n\nВыберите номер:", category.Name)
 	}
 
@@ -153,18 +196,30 @@ func (b *Bot) HandleCategory(callback *tgbotapi.CallbackQuery, categoryID string
 		chatID,
 		messageID,
 		text,
-		ItemsMenu(categoryID),
+		ItemsMenu(items),
 	)
 }
 
 func (b *Bot) HandleItem(callback *tgbotapi.CallbackQuery, itemID string) {
 	chatID := callback.Message.Chat.ID
 	messageID := callback.Message.MessageID
-	item := GetItemByID(itemID)
 
-	if item == nil {
+	id, err := strconv.ParseInt(
+		itemID,
+		10,
+		64,
+	)
+
+	if err != nil {
+		log.Println(err)
 		return
 	}
+
+	item, err := repository.GetItemByID(
+		context.Background(),
+		b.DB,
+		id,
+	)
 
 	text := fmt.Sprintf("%s", item.Name)
 
@@ -172,14 +227,27 @@ func (b *Bot) HandleItem(callback *tgbotapi.CallbackQuery, itemID string) {
 		chatID,
 		messageID,
 		text,
-		ItemMenu(item.CategoryID),
+		ItemMenu(item.ID),
 	)
 
-	b.sendVideos(chatID, item.ID)
+	videos, err := repository.GetVideosByItemID(
+		context.Background(),
+		b.DB,
+		id,
+	)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	b.SendVideos(
+		chatID,
+		videos,
+	)
 }
 
-func (b *Bot) sendVideos(chatID int64, itemID string) {
-	videos := GetVideoByItemID(itemID)
+func (b *Bot) SendVideos(chatID int64, videos []models.Video) {
 	if len(videos) == 0 {
 		return
 	}

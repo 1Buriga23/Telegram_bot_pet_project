@@ -4,11 +4,11 @@ import (
 	"gracia-bot/internal/telegram"
 	"log"
 	"os"
+	"gracia-bot/internal/database"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-
 	err := godotenv.Load()
 
 	if err != nil {
@@ -16,8 +16,13 @@ func main() {
 	}
 
 	token := os.Getenv("BOT_TOKEN")
+	dbPassword := os.Getenv("DB_PASSWORD")
 
-	bot, err := telegram.NewBot(token)
+	db := database.Connect(dbPassword)
+
+	defer db.Close()
+
+	bot, err := telegram.NewBot(token,db)
 
 	if err != nil {
 		log.Fatal(err)
