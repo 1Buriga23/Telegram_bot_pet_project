@@ -1,1 +1,1 @@
-SELECT id,name,file_id,item_id FROM videos;
+SELECT * FROM admins;

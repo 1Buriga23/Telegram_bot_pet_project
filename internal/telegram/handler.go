@@ -26,6 +26,22 @@ func (b *Bot) HandleUpdate(update tgbotapi.Update) {
 	}
 }
 
+func (b *Bot) ShowAdminPanel(chatID int64) {
+
+	message := tgbotapi.NewMessage(
+		chatID,
+		"⚙️ Админ-панель",
+	)
+
+	message.ReplyMarkup = AdminPanelMenu()
+
+	_, err := b.API.Send(message)
+
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (b *Bot) EditMenu(
 	chatID int64,
 	messageID int,
@@ -56,6 +72,11 @@ func (b *Bot) ShowMainMenu(
 		b.DB,
 	)
 
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	message := tgbotapi.NewMessage(
 		chatID,
 		text,
@@ -81,6 +102,43 @@ func (b *Bot) ShowMainMenu(
 	Sessions[chatID] = session
 }
 
+func (b *Bot) ShowSearchResults(
+	chatID int64,
+	items []models.Item,
+) {
+
+	if len(items) == 0 {
+
+		message := tgbotapi.NewMessage(
+			chatID,
+			"🔎 Ничего не найдено",
+		)
+
+		message.ReplyMarkup = BackToMenu()
+
+		_, err := b.API.Send(message)
+
+		if err != nil {
+			log.Println(err)
+		}
+
+		return
+	}
+
+	message := tgbotapi.NewMessage(
+		chatID,
+		"🔎 Результаты поиска:",
+	)
+
+	message.ReplyMarkup = ItemsMenu(items)
+
+	_, err := b.API.Send(message)
+
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (b *Bot) HandleCallback(callback *tgbotapi.CallbackQuery) {
 	data := callback.Data
 
@@ -92,13 +150,25 @@ func (b *Bot) HandleCallback(callback *tgbotapi.CallbackQuery) {
 		b.HandleCategory(callback, categoryID)
 
 	case strings.HasPrefix(data, "item:"):
-
+		b.DeleteVideos(callback.Message.Chat.ID)
 		itemID := strings.TrimPrefix(data, "item:")
 		b.HandleItem(callback, itemID)
 
 	case data == "menu:main":
 		chatID := callback.Message.Chat.ID
 		messageID := callback.Message.MessageID
+		b.DeleteVideos(callback.Message.Chat.ID)
+
+		session, exists := Sessions[chatID]
+
+		if !exists {
+			session = &UserSession{}
+		}
+
+		session.SearchMode = false
+		session.FromSearch = false
+
+		Sessions[chatID] = session
 
 		categories, _ := repository.GetCategories(
 			context.Background(),
@@ -112,8 +182,29 @@ func (b *Bot) HandleCallback(callback *tgbotapi.CallbackQuery) {
 			MainMenu(categories),
 		)
 
-	}
+	case data == "search":
+		chatID := callback.Message.Chat.ID
+		messageID := callback.Message.MessageID
 
+		session, exists := Sessions[chatID]
+
+		if !exists {
+			session = &UserSession{}
+		}
+
+		session.SearchMode = true
+		session.FromSearch = true
+
+		Sessions[chatID] = session
+
+		b.EditMenu(
+			chatID,
+			messageID,
+			"🔎 Введите название элемента:",
+			BackToMenu(),
+		)
+
+	}
 }
 
 func (b *Bot) HandleMessage(message *tgbotapi.Message) {
@@ -134,6 +225,45 @@ func (b *Bot) HandleMessage(message *tgbotapi.Message) {
 				chatID,
 				textHello,
 			)
+		case "admin":
+
+			isAdmin, err := repository.IsAdmin(
+				context.Background(),
+				b.DB,
+				message.From.ID,
+			)
+
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			if isAdmin {
+
+				b.ShowAdminPanel(message.Chat.ID)
+
+				return
+			}
+
+			session, exists := Sessions[message.Chat.ID]
+
+			if !exists {
+				session = &UserSession{}
+			}
+
+			session.WaitingAdminPassword = true
+
+			Sessions[message.Chat.ID] = session
+
+			msg := tgbotapi.NewMessage(
+				message.Chat.ID,
+				"Введите пароль администратора:",
+			)
+
+			b.API.Send(msg)
+
+			return
+
 		default:
 			return
 		}
@@ -143,6 +273,78 @@ func (b *Bot) HandleMessage(message *tgbotapi.Message) {
 
 		fmt.Println("Video FileID:")
 		fmt.Println(message.Video.FileID)
+
+		return
+	}
+
+	session, exists := Sessions[message.Chat.ID]
+
+	if exists && session.WaitingAdminPassword {
+
+		if message.Text == GetAdminPassword() {
+
+			err := repository.AddAdmin(
+				context.Background(),
+				b.DB,
+				message.From.ID,
+			)
+
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			session.WaitingAdminPassword = false
+			Sessions[message.Chat.ID] = session
+
+			msg := tgbotapi.NewMessage(
+				message.Chat.ID,
+				"✅ Админ доступ получен",
+			)
+
+			b.API.Send(msg)
+
+			b.ShowAdminPanel(message.Chat.ID)
+
+		} else {
+
+			msg := tgbotapi.NewMessage(
+				message.Chat.ID,
+				"❌ Неверный пароль",
+			)
+
+			b.API.Send(msg)
+		}
+
+		return
+	}
+
+	if exists && session.SearchMode {
+
+		query := message.Text
+
+		if query == "" {
+			return
+		}
+
+		items, err := repository.SearchItems(
+			context.Background(),
+			b.DB,
+			query,
+		)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		session.SearchMode = false
+		Sessions[message.Chat.ID] = session
+
+		b.ShowSearchResults(
+			message.Chat.ID,
+			items,
+		)
 
 		return
 	}
@@ -223,13 +425,6 @@ func (b *Bot) HandleItem(callback *tgbotapi.CallbackQuery, itemID string) {
 
 	text := fmt.Sprintf("%s", item.Name)
 
-	b.EditMenu(
-		chatID,
-		messageID,
-		text,
-		ItemMenu(item.ID),
-	)
-
 	videos, err := repository.GetVideosByItemID(
 		context.Background(),
 		b.DB,
@@ -240,6 +435,24 @@ func (b *Bot) HandleItem(callback *tgbotapi.CallbackQuery, itemID string) {
 		log.Println(err)
 		return
 	}
+
+	session, exists := Sessions[chatID]
+
+	keyboard := ItemMenu(item.CategoryID)
+
+	if exists && session.FromSearch {
+		keyboard = SearchItemMenu()
+
+		session.FromSearch = false
+		Sessions[chatID] = session
+	}
+
+	b.EditMenu(
+		chatID,
+		messageID,
+		text,
+		keyboard,
+	)
 
 	b.SendVideos(
 		chatID,
@@ -266,10 +479,12 @@ func (b *Bot) SendVideos(chatID int64, videos []models.Video) {
 		chatID,
 		media,
 	)
+
 	messages, err := b.API.SendMediaGroup(message)
 
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	var messageIDs []int

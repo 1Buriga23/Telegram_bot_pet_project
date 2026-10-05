@@ -8,6 +8,9 @@ import (
 type UserSession struct {
 	MenuMessageID int
 	VideoMessages []int
+	SearchMode bool
+	FromSearch bool
+	WaitingAdminPassword bool
 }
 
 func (b *Bot) DeleteVideos(chatID int64) {

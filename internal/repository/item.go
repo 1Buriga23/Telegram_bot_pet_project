@@ -97,3 +97,48 @@ func GetItemByID(
 
 	return &item, nil
 }
+
+func SearchItems(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	query string,
+) ([]models.Item, error) {
+
+	rows, err := db.Query(
+		ctx,
+		`
+		SELECT id, name, category_id
+		FROM items
+		WHERE name ILIKE '%' || $1 || '%'
+		ORDER BY name;
+		`,
+		query,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var items []models.Item
+
+	for rows.Next() {
+
+		var item models.Item
+
+		err := rows.Scan(
+			&item.ID,
+			&item.Name,
+			&item.CategoryID,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, item)
+	}
+
+	return items, nil
+}
