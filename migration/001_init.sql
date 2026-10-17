@@ -32,3 +32,14 @@ CREATE TABLE videos (
         ON DELETE CASCADE
 
 );
+
+CREATE TABLE admins (
+    id SERIAL PRIMARY KEY,
+    telegram_id BIGINT UNIQUE NOT NULL
+)
+
+INSERT INTO categories (name)
+VALUES
+('Акробатика'),
+('Гимнастика'),
+('Выступления');

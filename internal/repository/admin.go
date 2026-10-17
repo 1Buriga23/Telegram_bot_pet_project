@@ -6,7 +6,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-
 func IsAdmin(
 	ctx context.Context,
 	db *pgxpool.Pool,
@@ -29,7 +28,6 @@ func IsAdmin(
 
 	return exists, err
 }
-
 
 func AddAdmin(
 	ctx context.Context,

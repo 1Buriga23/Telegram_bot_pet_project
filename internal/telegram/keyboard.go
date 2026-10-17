@@ -11,9 +11,9 @@ func BackToMenu() tgbotapi.InlineKeyboardMarkup {
 	buttons := [][]tgbotapi.InlineKeyboardButton{
 		{
 			tgbotapi.NewInlineKeyboardButtonData(
-                    "⬅️ Назад",
-                    "menu:main",
-                ),
+				"⬅️ Назад",
+				"menu:main",
+			),
 		},
 	}
 	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
@@ -133,6 +133,95 @@ func AdminPanelMenu() tgbotapi.InlineKeyboardMarkup {
 			),
 		),
 	)
+
+	buttons = append(buttons,
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(
+				"🏠 Главное меню",
+				"menu:main",
+			),
+		),
+	)
+
+	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
+}
+
+func AdminSelectCategoryMenu(categories []models.Category) tgbotapi.InlineKeyboardMarkup {
+	buttons := [][]tgbotapi.InlineKeyboardButton{}
+
+	for _, category := range categories {
+		button := tgbotapi.NewInlineKeyboardButtonData(
+			category.Name,
+			"admin:item_category:"+strconv.FormatInt(category.ID, 10),
+		)
+
+		buttons = append(
+			buttons,
+			[]tgbotapi.InlineKeyboardButton{button},
+		)
+	}
+
+	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
+}
+
+func AddVideoActionsMenu() tgbotapi.InlineKeyboardMarkup {
+	return tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(
+				"➕ Добавить ещё видео",
+				"admin:add_more_video",
+			),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(
+				"✅ Завершить",
+				"admin:finish_videos",
+			),
+		),
+	)
+}
+
+func AdminVideoCategoriesMenu(
+	categories []models.Category,
+) tgbotapi.InlineKeyboardMarkup {
+	buttons := [][]tgbotapi.InlineKeyboardButton{}
+
+	for _, category := range categories {
+		button := tgbotapi.NewInlineKeyboardButtonData(
+			category.Name,
+			"admin:video_category:"+strconv.FormatInt(category.ID, 10),
+		)
+
+		buttons = append(
+			buttons,
+			[]tgbotapi.InlineKeyboardButton{button},
+		)
+	}
+
+	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
+}
+
+func AdminVideoItemsMenu(items []models.Item) tgbotapi.InlineKeyboardMarkup {
+	buttons := [][]tgbotapi.InlineKeyboardButton{}
+
+	for _, item := range items {
+		button := tgbotapi.NewInlineKeyboardButtonData(
+			item.Name,
+			"admin:video_item:"+strconv.FormatInt(item.ID, 10),
+		)
+
+		buttons = append(
+			buttons,
+			[]tgbotapi.InlineKeyboardButton{button},
+		)
+	}
+
+	buttons = append(buttons, []tgbotapi.InlineKeyboardButton{
+		tgbotapi.NewInlineKeyboardButtonData(
+			"⬅️ К категориям",
+			"admin:add_video",
+		),
+	})
 
 	return tgbotapi.NewInlineKeyboardMarkup(buttons...)
 }

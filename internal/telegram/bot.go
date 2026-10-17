@@ -9,10 +9,10 @@ import (
 
 type Bot struct {
 	API *tgbotapi.BotAPI
-	DB *pgxpool.Pool
+	DB  *pgxpool.Pool
 }
 
-func NewBot(token string,db *pgxpool.Pool) (*Bot,error){
+func NewBot(token string, db *pgxpool.Pool) (*Bot, error) {
 
 	api, err := tgbotapi.NewBotAPI(token)
 
@@ -22,6 +22,6 @@ func NewBot(token string,db *pgxpool.Pool) (*Bot,error){
 
 	return &Bot{
 		API: api,
-		DB: db,
-	},nil
+		DB:  db,
+	}, nil
 }

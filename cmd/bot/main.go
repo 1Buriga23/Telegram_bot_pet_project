@@ -1,28 +1,37 @@
 package main
 
 import (
+	"gracia-bot/internal/database"
 	"gracia-bot/internal/telegram"
 	"log"
 	"os"
-	"gracia-bot/internal/database"
+
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.Fatal("Ошибка загрузки .env")
+	if err := godotenv.Load(); err != nil {
+		if !os.IsNotExist(err) {
+			log.Fatal("Ошибка загрузки .env:", err)
+		}
 	}
 
 	token := os.Getenv("BOT_TOKEN")
 	dbPassword := os.Getenv("DB_PASSWORD")
 
+	if token == "" {
+		log.Fatal("Переменная BOT_TOKEN не задана")
+	}
+
+	if dbPassword == "" {
+		log.Fatal("Переменная DB_PASSWORD не задана")
+	}
+
 	db := database.Connect(dbPassword)
 
 	defer db.Close()
 
-	bot, err := telegram.NewBot(token,db)
+	bot, err := telegram.NewBot(token, db)
 
 	if err != nil {
 		log.Fatal(err)
@@ -31,5 +40,5 @@ func main() {
 	log.Println("Бот запущен")
 
 	bot.Start()
-	
-	}
+
+}

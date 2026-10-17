@@ -8,13 +8,11 @@ import (
 	"gracia-bot/internal/models"
 )
 
-
 func GetVideosByItemID(
 	ctx context.Context,
 	db *pgxpool.Pool,
 	itemID int64,
 ) ([]models.Video, error) {
-
 
 	rows, err := db.Query(
 		ctx,
@@ -26,22 +24,17 @@ func GetVideosByItemID(
 		itemID,
 	)
 
-
 	if err != nil {
 		return nil, err
 	}
 
-
 	defer rows.Close()
 
-
 	var videos []models.Video
-
 
 	for rows.Next() {
 
 		var video models.Video
-
 
 		err := rows.Scan(
 			&video.ID,
@@ -50,11 +43,9 @@ func GetVideosByItemID(
 			&video.ItemID,
 		)
 
-
 		if err != nil {
 			return nil, err
 		}
-
 
 		videos = append(
 			videos,
@@ -62,6 +53,26 @@ func GetVideosByItemID(
 		)
 	}
 
-
 	return videos, nil
+}
+
+func CreateVideo(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	name string,
+	fileID string,
+	itemID int64,
+) error {
+	_, err := db.Exec(
+		ctx,
+		`
+        INSERT INTO videos (name, file_id, item_id)
+        VALUES ($1, $2, $3)
+        `,
+		name,
+		fileID,
+		itemID,
+	)
+
+	return err
 }

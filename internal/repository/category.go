@@ -24,9 +24,9 @@ func GetCategories(ctx context.Context, db *pgxpool.Pool) ([]models.Category, er
 	defer rows.Close()
 
 	categories := []models.Category{}
-	for rows.Next(){
+	for rows.Next() {
 		var category models.Category
-		err := rows.Scan(&category.ID,&category.Name)
+		err := rows.Scan(&category.ID, &category.Name)
 
 		if err != nil {
 			return nil, err
@@ -35,7 +35,7 @@ func GetCategories(ctx context.Context, db *pgxpool.Pool) ([]models.Category, er
 		categories = append(categories, category)
 
 	}
-	return  categories, nil
+	return categories, nil
 }
 
 func GetCategoryByID(
@@ -44,9 +44,7 @@ func GetCategoryByID(
 	id int64,
 ) (*models.Category, error) {
 
-
 	var category models.Category
-
 
 	err := db.QueryRow(
 		ctx,
@@ -61,11 +59,23 @@ func GetCategoryByID(
 		&category.Name,
 	)
 
-
 	if err != nil {
 		return nil, err
 	}
 
-
 	return &category, nil
+}
+
+func CreateCategory(ctx context.Context, db *pgxpool.Pool, name string) error {
+	_, err := db.Exec(ctx,
+		`
+		INSERT INTO categories (name)
+		VALUES ($1)
+		`,
+		name)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

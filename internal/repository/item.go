@@ -8,7 +8,6 @@ import (
 	"gracia-bot/internal/models"
 )
 
-
 // Получение всех элементов определённой категории
 func GetItemsByCategoryID(
 	ctx context.Context,
@@ -32,14 +31,11 @@ func GetItemsByCategoryID(
 
 	defer rows.Close()
 
-
 	var items []models.Item
-
 
 	for rows.Next() {
 
 		var item models.Item
-
 
 		err := rows.Scan(
 			&item.ID,
@@ -51,18 +47,14 @@ func GetItemsByCategoryID(
 			return nil, err
 		}
 
-
 		items = append(
 			items,
 			item,
 		)
 	}
 
-
 	return items, nil
 }
-
-
 
 // Получение одного элемента по ID
 func GetItemByID(
@@ -71,9 +63,7 @@ func GetItemByID(
 	id int64,
 ) (*models.Item, error) {
 
-
 	var item models.Item
-
 
 	err := db.QueryRow(
 		ctx,
@@ -89,11 +79,9 @@ func GetItemByID(
 		&item.CategoryID,
 	)
 
-
 	if err != nil {
 		return nil, err
 	}
-
 
 	return &item, nil
 }
@@ -141,4 +129,30 @@ func SearchItems(
 	}
 
 	return items, nil
+}
+
+func CreateItem(
+	ctx context.Context,
+	db *pgxpool.Pool,
+	name string,
+	categoryID int64,
+) (int64, error) {
+	var itemID int64
+
+	err := db.QueryRow(
+		ctx,
+		`
+        INSERT INTO items (name, category_id)
+        VALUES ($1, $2)
+        RETURNING id
+        `,
+		name,
+		categoryID,
+	).Scan(&itemID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return itemID, nil
 }
